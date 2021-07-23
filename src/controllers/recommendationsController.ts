@@ -68,8 +68,6 @@ async function randomSong(req: Request, res: Response){
             return res.sendStatus(404);
         }
 
-        console.log(selectedSong);
-
         res.send(selectedSong);
     }catch(err){
         console.error(err);
@@ -86,7 +84,7 @@ async function topSongs(req: Request, res: Response){
         if(selectedRightAmount === null){
             return res.sendStatus(404);
         }
-
+        
         res.send(selectedRightAmount);
     }catch(err){
         console.error(err);

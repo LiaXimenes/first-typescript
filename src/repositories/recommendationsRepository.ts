@@ -1,27 +1,27 @@
 import connection from "../database";
+import { selectedSongs } from "../services/recommendationsService";
 
 async function postingTheSong(name: string, youtubeLink: string){
     const songWasPosted = await connection.query(`
-    INSERT INTO recommendations (name, "youtubeLink", score)
-    VALUES ($1,$2, $3)
-    RETURNING *
+        INSERT INTO recommendations (name, "youtubeLink", score)
+        VALUES ($1,$2, $3)
+        RETURNING *
     `, [name, youtubeLink, 0]);
 
     return songWasPosted.rows;
 }
 
-async function upVoting(id: number){
+async function  songExists(id: number){
     const gettingSong = await connection.query(`
         SELECT * FROM recommendations
         WHERE id = $1
     `, [id]);
 
-    if(gettingSong.rows === []){
-        return null;
-    }
+    return gettingSong.rows
 
-    let newScore = gettingSong.rows[0].score +1
+}
 
+async function upVoting(id: number, newScore: number){
     const songWasVoted= await connection.query(`
         UPDATE recommendations 
         SET score = $1 
@@ -32,18 +32,7 @@ async function upVoting(id: number){
     return songWasVoted.rows;
 }
 
-async function downVoting(id: number){
-    const gettingSong = await connection.query(`
-        SELECT * FROM recommendations
-        WHERE id = $1
-    `, [id])
-
-    if(gettingSong.rows === []){
-        return null
-    }
-
-    let newScore = gettingSong.rows[0].score -1
-
+async function downVoting(id: number, newScore: number){
     const songWasVoted = await connection.query(`
         UPDATE recommendations
         SET score = $1
@@ -51,16 +40,16 @@ async function downVoting(id: number){
         RETURNING *    
     `, [newScore, id]);
 
-    if(songWasVoted.rows[0].score === -6){
-        const deletingSong = await connection.query(`
-            DELETE FROM recommendations 
-            WHERE id = $1
-        `,[id]);
+    return songWasVoted.rows;
+}
 
-        return deletingSong.rows;
-    } else{
-        return songWasVoted.rows;
-    }
+async function deletingSong(id: number){
+    const deletingSong = await connection.query(`
+        DELETE FROM recommendations 
+        WHERE id = $1
+    `,[id]);
+
+    return deletingSong.rows;
 }
 
 async function selectingSongs(){
@@ -80,4 +69,4 @@ async function selectingTopSongs(){
     return selectedTopSongs.rows;
 }
 
-export {postingTheSong, upVoting, downVoting, selectingSongs, selectingTopSongs}
+export {postingTheSong, songExists, upVoting, downVoting, deletingSong, selectingSongs, selectingTopSongs}

@@ -11,23 +11,36 @@ async function postingSong(name: string, youtubeLink: string){
 }
 
 async function upVoting(id: number){
-    const songWasUpVoted = await recommendationsRepository.upVoting(id);
+    const songIdIsValid = await recommendationsRepository.songExists(id);
 
-    
-    if(!songWasUpVoted){
+    if(songIdIsValid.length === 0){
         return null;
     }
+
+    let newScore = songIdIsValid[0].score +1
+
+    const songWasUpVoted = await recommendationsRepository.upVoting(id, newScore);
 
     return songWasUpVoted;
 }
 
 async function downVoting(id: number){
-    const songWasDownVoted = await recommendationsRepository.downVoting(id);
+    const songIdIsValid = await recommendationsRepository.songExists(id);
 
-    if(!songWasDownVoted){
+    if(songIdIsValid.length === 0){
         return null;
     }
 
+    let newScore = songIdIsValid[0].score -1
+
+    const songWasDownVoted = await recommendationsRepository.downVoting(id, newScore);
+
+    if(songWasDownVoted[0].score === -6){
+        const deletingSong = await recommendationsRepository.deletingSong(id);
+
+        return deletingSong;
+    } 
+    
     return songWasDownVoted;
 }
 
@@ -46,8 +59,6 @@ async function selectedSongs(){
     }
 
     let randomChoice = Math.random();
-
-    console.log(randomChoice)
 
     if(randomChoice > 0.3){
         arrayOfTenPlusSong = arrayOfTenPlusSong.sort(() => Math.random() - 0.5);
